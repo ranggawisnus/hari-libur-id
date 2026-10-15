@@ -25,6 +25,26 @@ app = FastAPI(
 )
 
 
+@app.on_event("startup")
+def _ensure_db() -> None:
+    """Auto-ingest kalau DB belum ada / kosong (ephemeral disk di free tier).
+
+    Ingest cuma ~0.06s dan DB cuma ~52KB, jadi aman dijalankan tiap cold start.
+    Set via env HOLIDAYS_AUTO_INGEST=off untuk mematikan.
+    """
+    import os
+
+    if os.environ.get("HOLIDAYS_AUTO_INGEST", "on").lower() in ("off", "0", "false"):
+        return
+    conn = connect()
+    try:
+        (n,) = conn.execute("SELECT COUNT(*) FROM holidays").fetchone()
+    finally:
+        conn.close()
+    if n == 0:
+        ingest_run(2024, 2032)
+
+
 def _enrich(row: dict) -> dict:
     """Tambah field turunan (weekday, is_weekend, is_official) ke baris DB."""
     d = date.fromisoformat(row["date"])

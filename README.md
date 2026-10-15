@@ -82,6 +82,30 @@ curl "http://localhost:8000/holidays/2025-08-17"
 curl "http://localhost:8000/holidays/next?from_date=2025-08-16"
 ```
 
+## Deploy (Render free tier)
+
+Repo ini siap deploy ke Render free tier (region singapore). Stateless by design:
+DB di-generate saat image build DAN saat startup kalau kosong (ephemeral disk
+free tier tidak masalah — ingest cuma ~0.06 detik, DB ~52KB).
+
+Cara 1 — Blueprint (recommended):
+  1. Login https://dashboard.render.com pakai akun GitHub lu
+  2. New > Blueprint > pilih repo `ranggawisnus/hari-libur-id`
+  3. render.yaml terbaca otomatis (web service, free plan, docker)
+  4. Deploy — auto-deploy aktif setiap push ke main
+
+Cara 2 — Manual:
+  1. New > Web Service > connect repo
+  2. Runtime: Docker, Region: Singapore, Plan: Free
+  3. Health check path: /health
+
+Test Docker lokal:
+  docker build -t hari-libur-id .
+  docker run -p 8000:8000 hari-libur-id
+
+Catatan free tier: service sleep setelah 15 menit idle; cold start ~1 menit
+(request pertama setelah idle akan lambat, sisanya normal).
+
 ## Update data tahun baru
 
 Saat SKB tahun berikutnya terbit (biasanya Sep-Okt):
