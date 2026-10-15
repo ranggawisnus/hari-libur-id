@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+hijri-converter
+lunardate
+pytest
+httpx
